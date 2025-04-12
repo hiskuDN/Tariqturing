@@ -58,12 +58,12 @@ const Simulator = () => {
     setCurrentStep(0);
     setIsDone(false);
     try {
-      // Use the parser utility
+      // Use the utility function to parse the state table string
       const {
         transitions: parsedTransitions,
         initialTape,
         initialState
-      } = parseStateTable(stateTable);
+      } = parseStateTable(stateTable); // Defined in @/utils/turingMachineParser
       if (parsedTransitions.length === 0) {
         setErrorMessage('No valid transitions found in the state table');
         return;
