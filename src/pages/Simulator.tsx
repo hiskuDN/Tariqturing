@@ -33,20 +33,25 @@ table:
     0: {N: done}
     _: {N: done}
 `;
-const Simulator = () => {
-  const [stateTable, setStateTable] = useState(DEFAULT_EXAMPLE);
-  const [tape, setTape] = useState<string[]>([]);
-  const [headPosition, setHeadPosition] = useState(0);
-  const [currentState, setCurrentState] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [speed, setSpeed] = useState([50]); // 1-100 speed
-  const [transitions, setTransitions] = useState<any[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [debugLog, setDebugLog] = useState<string[]>(['# Machine initialized']);
-  const [isDone, setIsDone] = useState(false);
 
-  // Initialize the machine
+const Simulator = () => {
+  const [stateTable, setStateTable] = useState(DEFAULT_EXAMPLE); // Raw input string for the state table definition
+  const [tape, setTape] = useState<string[]>([]); // Array representing the Turing machine tape
+  const [headPosition, setHeadPosition] = useState(0); // Current position of the tape head
+  const [currentState, setCurrentState] = useState(''); // Current state of the machine
+  const [isRunning, setIsRunning] = useState(false); // Flag indicating if the machine is auto-running
+  const [speed, setSpeed] = useState([50]); // Controls the auto-run speed (1-100)
+  const [transitions, setTransitions] = useState<any[]>([]); // Parsed transition rules from the state table
+  const [currentStep, setCurrentStep] = useState(0); // Counter for the number of steps executed
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // Stores parsing or runtime errors
+  const [debugLog, setDebugLog] = useState<string[]>(['# Machine initialized']); // Log of machine operations for debugging
+  const [isDone, setIsDone] = useState(false); // Flag indicating if the machine has halted
+
+  /**
+   * Parses the state table input, initializes the tape, head position,
+   * current state, and transitions based on the parsed data.
+   * Resets any previous run state and error messages.
+   */
   const initialize = () => {
     setErrorMessage(null);
     setDebugLog(['# Machine initialized']);
@@ -74,24 +79,39 @@ const Simulator = () => {
       setErrorMessage(`Error parsing state table: ${(error as Error).message}`);
     }
   };
+
+  /**
+   * Appends a message to the debug log state.
+   * @param message The string message to add to the log.
+   */
   const addToDebugLog = (message: string) => {
     setDebugLog(prev => [...prev, message]);
   };
 
-  // Step through the machine
+  /**
+   * Executes a single step of the Turing machine simulation.
+   * Finds the appropriate transition based on the current state and tape symbol,
+   * updates the tape, moves the head, changes the state, and checks for halting conditions.
+   * Logs the actions taken to the debug log.
+   */
   const step = () => {
+    // Check if initialization is needed (e.g., first run or after reset)
     if (!transitions.length) {
       initialize();
       return;
     }
+    // Prevent stepping if the machine has already halted
     if (isDone) {
       addToDebugLog("Machine already halted. Reset to run again.");
       return;
     }
+    // Read the symbol under the head, defaulting to blank ('_') if out of bounds
     const currentSymbol = tape[headPosition] || '_';
 
-    // Find matching transition
+    // Find the transition rule matching the current state and symbol
     const transition = transitions.find(t => t.currentState === currentState && (t.readSymbol === currentSymbol || Array.isArray(t.readSymbol) && t.readSymbol.includes(currentSymbol)));
+
+    // Handle case where no transition is defined (error state)
     if (!transition) {
       setErrorMessage(`No transition defined for state '${currentState}' reading symbol '${currentSymbol}'`);
       addToDebugLog(`ERROR: No transition for state ${currentState}, symbol ${currentSymbol}`);
@@ -99,39 +119,41 @@ const Simulator = () => {
       return;
     }
 
-    // Log the step
+    // Log the step details
     addToDebugLog(`Step ${currentStep + 1}: ${currentState} read ${currentSymbol} -> ${transition.nextState}`);
 
-    // Update tape
+    // Update tape if a write symbol is specified
     const newTape = [...tape];
-    if (transition.writeSymbol && transition.writeSymbol !== 'R') {
+    if (transition.writeSymbol && transition.writeSymbol !== 'R') { // Assuming 'R' isn't a valid write symbol but a move indicator in some formats
       newTape[headPosition] = transition.writeSymbol;
       setTape(newTape);
       addToDebugLog(`  Write: ${transition.writeSymbol}`);
     }
 
-    // Update state
+    // Update the current state
     setCurrentState(transition.nextState);
 
-    // Move head
+    // Move the tape head based on the transition rule
     if (transition.moveDirection === 'L') {
-      setHeadPosition(Math.max(0, headPosition - 1));
-      addToDebugLog(`  Move: Left to position ${Math.max(0, headPosition - 1)}`);
+      const nextHeadPosition = Math.max(0, headPosition - 1);
+      setHeadPosition(nextHeadPosition);
+      addToDebugLog(`  Move: Left to position ${nextHeadPosition}`);
     } else if (transition.moveDirection === 'R') {
-      setHeadPosition(headPosition + 1);
-      addToDebugLog(`  Move: Right to position ${headPosition + 1}`);
-      // Extend tape if necessary
-      if (headPosition + 1 >= tape.length) {
-        setTape([...newTape, '_']);
+      const nextHeadPosition = headPosition + 1;
+      setHeadPosition(nextHeadPosition);
+      addToDebugLog(`  Move: Right to position ${nextHeadPosition}`);
+      // Extend tape with a blank symbol if moving beyond the current right end
+      if (nextHeadPosition >= tape.length) {
+        setTape([...newTape, '_']); // Use newTape to include potential write
       }
-    } else {
+    } else { // Handle 'N' (No move / Halt)
       addToDebugLog(`  Move: None (halt)`);
-      setIsDone(true);
+      setIsDone(true); // Explicitly set done flag on 'N'
     }
     setCurrentStep(prev => prev + 1);
 
-    // Check for halting
-    if (transition.moveDirection === 'N' || transition.nextState === 'done') {
+    // Check for halting conditions (explicit 'N' move or reaching a 'done' state)
+    if (transition.moveDirection === 'N' || transition.nextState === 'done') { // Assuming 'done' is a conventional halting state name
       addToDebugLog(`Machine halted at state ${transition.nextState}`);
       setIsDone(true);
       setIsRunning(false);
