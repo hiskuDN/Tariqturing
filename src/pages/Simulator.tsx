@@ -95,6 +95,21 @@ const Simulator = () => {
    * Logs the actions taken to the debug log.
    */
   const step = () => {
+    /**
+     * Steps through the Turing machine simulation.
+     *   1. Initialization check (if !transitions.length)
+     *   2. Halt check (if isDone)
+     *   3. Read current symbol (handle out of bounds)
+     *   4. Find matching transition rule
+     *   5. Handle 'no transition found' error
+     *   6. Log step details
+     *   7. Update tape (write symbol)
+     *   8. Update current state
+     *   9. Update head position (move L/R/N, extend tape if needed)
+     *   10. Increment step counter
+     *   11. Check for halt conditions ('N' move or 'done' state)
+     */
+
     // Check if initialization is needed (e.g., first run or after reset)
     if (!transitions.length) {
       initialize();
