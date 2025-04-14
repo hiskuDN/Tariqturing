@@ -27,6 +27,7 @@ const TuringMachine: React.FC<TuringMachineProps> = ({ tape, headPosition, curre
     <div className="flex flex-col items-center">
       <div className="relative">
         <div className="flex">
+          {/* Map is a for loop for a list of object */}
           {visibleTape.map((cell, index) => (
             <div 
               key={index} 

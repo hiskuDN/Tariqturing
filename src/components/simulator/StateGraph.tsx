@@ -121,13 +121,15 @@ const StateGraph: React.FC<StateGraphProps> = ({ transitions, currentState }) =>
   
   return (
     <div className="h-full w-full relative overflow-hidden">
-      <svg width="100%" height="100%" viewBox="0 0 300 300">
+      {/* SVG (Scalable Vector Graphics) container */}
+      <svg width="100%" height="100%" viewBox="0 0 300 300"> 
         {/* Draw edges */}
         {edges.map((edge, i) => {
-          const isActive = edge.source === currentState;
+          const isActive = edge.source === currentState; // checks if the edge is coming out of the current state
           return (
             <g key={`edge-${i}`}>
               <path 
+              // Bezier curve path for the edge
                 d={getBezierPath(edge.source, edge.target)} 
                 fill="none" 
                 className={`transition-all duration-300 ${isActive ? 'stroke-green-500 stroke-[2px]' : 'stroke-gray-300'}`}
@@ -135,6 +137,7 @@ const StateGraph: React.FC<StateGraphProps> = ({ transitions, currentState }) =>
               />
               
               {/* Edge label */}
+              {/* This is the text in the state circle */}
               <text 
                 x="150" 
                 y="150" 
@@ -161,6 +164,7 @@ const StateGraph: React.FC<StateGraphProps> = ({ transitions, currentState }) =>
         })}
         
         {/* Draw states */}
+        {/* Map is like a for loop for a list of objects (states) */}
         {Array.from(states).map((state) => {
           const pos = statePositions[state];
           if (!pos) return null;

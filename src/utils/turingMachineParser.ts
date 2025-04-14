@@ -40,7 +40,7 @@ export interface TransitionRule {
  * @throws May throw an error if the syntax is invalid, although current implementation is lenient.
  */
 export const parseStructuredSyntax = (code: string): TuringMachineConfig => {
-  const lines = code.split('\n');
+  const lines = code.split('\n'); // Split the input into lines for processing
   let initialState = 'right'; // Default initial state if not specified
   let blank = '_'; // Default blank symbol if not specified
   let input = '';
@@ -54,9 +54,9 @@ export const parseStructuredSyntax = (code: string): TuringMachineConfig => {
    */
   const processTransition = (line: string, state: string) => {
     // Match format: `symbol: { options }` or `[symbol1,symbol2]: { options }`
-    const match = line.match(/^\s*(?:\[([^\]]+)\]|([^:]+)):\s*(.*)/);
+    // Regular expression (regex): https://cs.lmu.edu/~ray/notes/regex/
+    const match = line.match(/^\s*(?:\[([^\]]+)\]|([^:]+)):\s*(.*)/); // check if line is a transition
     if (!match) return; // Ignore lines that don't match the transition format
-
     // Extract symbols (can be a single symbol or a comma-separated list in brackets)
     const symbols = match[1] ? match[1].split(',').map(s => s.trim()) : [match[2].trim()];
     const options = match[3].trim(); // The part within {}
@@ -91,7 +91,7 @@ export const parseStructuredSyntax = (code: string): TuringMachineConfig => {
 
   // Iterate through each line of the input code
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+    const line = lines[i].trim(); // remove any leading/trailing whitespace
 
     // Skip comments and empty lines
     if (line.startsWith('#') || line === '') continue;
@@ -156,6 +156,8 @@ export const parseStateTable = (stateTable: string): {
 
   // Parse the input using the structured syntax parser
   const config = parseStructuredSyntax(stateTable);
+  // Returns a TuringMachineConfig object:
+  // initialState, blank, input, transitions
 
   // Log the parsed configuration for debugging
   // console.log('Parsed config:', JSON.stringify({

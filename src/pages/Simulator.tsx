@@ -53,10 +53,13 @@ const Simulator = () => {
    * Resets any previous run state and error messages.
    */
   const initialize = () => {
+    // UI variables
     setErrorMessage(null);
     setDebugLog(['# Machine initialized']);
-    setCurrentStep(0);
     setIsDone(false);
+    
+    // Turing machine background state
+    setCurrentStep(0);
     try {
       // Use the utility function to parse the state table string
       const {
@@ -64,14 +67,21 @@ const Simulator = () => {
         initialTape,
         initialState
       } = parseStateTable(stateTable); // Defined in @/utils/turingMachineParser
+
+      // Updating page state (the information on the page)
       if (parsedTransitions.length === 0) {
+        // Check for invalid transition
         setErrorMessage('No valid transitions found in the state table');
         return;
       }
-      setTransitions(parsedTransitions);
-      setTape(initialTape);
+
+      setTransitions(parsedTransitions); // transitions from parseStateTable
+      setTape(initialTape); // initialTape from parseStateTable
+      setCurrentState(initialState); // initialState from parseStateTable
+      
+      // TODO: Explain this later
       setHeadPosition(0);
-      setCurrentState(initialState);
+
       addToDebugLog(`Initialized with ${parsedTransitions.length} transitions`);
       addToDebugLog(`Initial state: ${initialState}, Tape: ${initialTape.join('')}`);
     } catch (error) {
@@ -99,6 +109,7 @@ const Simulator = () => {
      * Steps through the Turing machine simulation.
      *   1. Initialization check (if !transitions.length)
      *   2. Halt check (if isDone)
+     * Main execution logic:
      *   3. Read current symbol (handle out of bounds)
      *   4. Find matching transition rule
      *   5. Handle 'no transition found' error
@@ -113,17 +124,23 @@ const Simulator = () => {
     // Check if initialization is needed (e.g., first run or after reset)
     if (!transitions.length) {
       initialize();
+      // end function
       return;
     }
     // Prevent stepping if the machine has already halted
+    // isDone is true when the turing machine is complete
     if (isDone) {
       addToDebugLog("Machine already halted. Reset to run again.");
+      // end function
       return;
     }
+
+    // Main execution logic
     // Read the symbol under the head, defaulting to blank ('_') if out of bounds
     const currentSymbol = tape[headPosition] || '_';
 
     // Find the transition rule matching the current state and symbol
+    // Go through transtions, and find a matching transition for the current state and symbol
     const transition = transitions.find(t => t.currentState === currentState && (t.readSymbol === currentSymbol || Array.isArray(t.readSymbol) && t.readSymbol.includes(currentSymbol)));
 
     // Handle case where no transition is defined (error state)
@@ -170,6 +187,7 @@ const Simulator = () => {
     // Check for halting conditions (explicit 'N' move or reaching a 'done' state)
     if (transition.moveDirection === 'N' || transition.nextState === 'done') { // Assuming 'done' is a conventional halting state name
       addToDebugLog(`Machine halted at state ${transition.nextState}`);
+      // update isDone = true and isRunning = false
       setIsDone(true);
       setIsRunning(false);
     }
@@ -177,7 +195,10 @@ const Simulator = () => {
 
   // Run continuously
   React.useEffect(() => {
+    // Execute something based on the change of the state (isRunning, headPosition, currentState, tape, transitions, speed, isDone)
+    // if isRunning is true, run the step function
     if (!isRunning || isDone) return;
+    // setInterval is a timer that executes the step function every x milliseconds
     const interval = setInterval(() => {
       step();
     }, 1000 - speed[0] * 9); // Map 1-100 to 1000-100ms
